@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "module": "CommonJS",
+        "target": "ES2017",
+        "noImplicitAny": true,
+        "preserveConstEnums": true,
+        "outDir": "./build",
+        "sourceMap": true,
+        "emitDecoratorMetadata": true
+      },
+    "exclude": ["node_modules","**/*.spec.*",".git",".vscode","docs","dependencies",".aws-sam","build"],
+    "compileOnSave": false,
+    "buildOnSave": false,
+}

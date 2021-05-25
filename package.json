@@ -1,0 +1,20 @@
+{
+  "name": "liq-blockchain",
+  "version": "1.0.0",
+  "description": "Liq Blockchain",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basyusuf/liq-blockchain.git"
+  },
+  "author": "Yusuf Bas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/basyusuf/liq-blockchain/issues"
+  },
+  "homepage": "https://github.com/basyusuf/liq-blockchain#readme"
+}

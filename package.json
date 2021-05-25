@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/basyusuf/liq-blockchain/issues"
   },
-  "homepage": "https://github.com/basyusuf/liq-blockchain#readme"
+  "homepage": "https://github.com/basyusuf/liq-blockchain#readme",
+  "dependencies": {
+    "@types/crypto-js": "^4.0.1",
+    "crypto-js": "^4.0.0"
+  }
 }

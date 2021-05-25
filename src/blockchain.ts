@@ -1,30 +1,59 @@
+import { SHA256 } from 'crypto-js';
 interface Block {
-    index:number;
-    timestamp:number;
-    transactions:Array<any>;
-    nonce:number;
-    hash:string;
-    previousBlockHash:string;
+    index: number;
+    timestamp: number;
+    transactions: Array<any>;
+    nonce: number;
+    hash: string;
+    previousBlockHash: string;
+}
+interface Transaction {
+    amount: number;
+    sender: string;
+    recipient: string;
+    timestamp: number;
 }
 class Blockchain {
     chain: Array<Block>;
-    transactions: Array<any>;
+    pendingTransactions: Array<Transaction>;
     constructor() {
         this.chain = [];
-        this.transactions = [];
+        this.pendingTransactions = [];
     }
-    createNewBlock(nonce:any,previousBlockHash:any,hash:any) {
-        const newBlock:Block = {
-            index:this.chain.length+1,
-            timestamp:new Date().getTime(),
-            transactions:this.transactions,
+    createNewBlock(nonce: number, previousBlockHash: string, hash: string) {
+        const newBlock: Block = {
+            index: this.chain.length + 1,
+            timestamp: new Date().getTime(),
+            transactions: this.pendingTransactions,
             nonce,
             hash,
-            previousBlockHash
+            previousBlockHash,
         };
         //Clear previous transaction
-        this.transactions = [];
+        this.pendingTransactions = [];
+        //Push block to chain
         this.chain.push(newBlock);
         return newBlock;
+    }
+    getLastBlock() {
+        let lastBlock = this.chain[this.chain.length - 1];
+        return lastBlock;
+    }
+    createNewTransaction(amount: number, sender: string, recipient: string) {
+        let newTransaction: Transaction = {
+            amount,
+            sender,
+            recipient,
+            timestamp: new Date().getTime(),
+        };
+
+        this.pendingTransactions.push(newTransaction);
+
+        return this.getLastBlock()['index'] + 1;
+    }
+    hashBlock(previousBlockHash: string, currentBlockData: Array<Transaction>, nonce: number) {
+        let dataAsString = previousBlockHash + nonce.toString() + JSON.stringify(currentBlockData);
+        const hash = SHA256(dataAsString);
+        return hash;
     }
 }

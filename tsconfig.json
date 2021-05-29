@@ -7,9 +7,10 @@
         "preserveConstEnums": true,
         "outDir": "./build",
         "sourceMap": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "esModuleInterop":true
       },
-    "exclude": ["node_modules","**/*.spec.*",".git",".vscode","docs","dependencies",".aws-sam","build"],
+    "exclude": ["node_modules",".git",".vscode","docs","build"],
     "compileOnSave": false,
     "buildOnSave": false,
 }

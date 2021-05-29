@@ -13,7 +13,7 @@ interface Transaction {
     recipient: string;
     timestamp: number;
 }
-class Blockchain {
+export class Blockchain {
     chain: Array<Block>;
     pendingTransactions: Array<Transaction>;
     constructor() {
@@ -67,5 +67,8 @@ class Blockchain {
             console.info(hash);
         }
         return nonce;
+    }
+    getPendingTransaction() {
+        return this.pendingTransactions;
     }
 }

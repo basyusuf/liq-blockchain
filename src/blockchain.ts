@@ -1,4 +1,5 @@
 import { SHA256 } from 'crypto-js';
+const CURRENT_NODE_URL = process.env.CURRENT_URL || 'http://localhost:3000';
 interface Block {
     index: number;
     timestamp: number;
@@ -16,9 +17,13 @@ interface Transaction {
 export class Blockchain {
     chain: Array<Block>;
     pendingTransactions: Array<Transaction>;
+    networkNodes: Array<any>;
+    currentNodeUrl: string;
     constructor() {
         this.chain = [];
         this.pendingTransactions = [];
+        this.currentNodeUrl = CURRENT_NODE_URL;
+        this.networkNodes = [];
         //Genesis block
         this.createNewBlock(100, '0', '0');
     }

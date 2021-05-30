@@ -17,7 +17,7 @@ interface Transaction {
 export class Blockchain {
     chain: Array<Block>;
     pendingTransactions: Array<Transaction>;
-    networkNodes: Array<any>;
+    networkNodes: Array<string>;
     currentNodeUrl: string;
     constructor() {
         this.chain = [];

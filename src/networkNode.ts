@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.get('/blockchain', (req, res, next) => {
-    res.send(
+    res.json(
         new ServiceResponse({
             status: true,
             statusCode: 200,
@@ -23,7 +23,7 @@ app.get('/blockchain', (req, res, next) => {
 app.post('/transaction', (req, res, next) => {
     console.log('Data:', req.body);
     let blockIndex = liqcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
-    res.send(
+    res.json(
         new ServiceResponse({
             status: true,
             statusCode: 201,
@@ -43,7 +43,7 @@ app.get('/mine', (req, res, next) => {
     const newBlock = liqcoin.createNewBlock(nonce, previousBlockHash, blockHash);
 
     console.info('New block:', newBlock);
-    res.send(
+    res.json(
         new ServiceResponse({
             status: true,
             statusCode: 201,
@@ -58,7 +58,6 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
     if (!liqcoin.networkNodes.includes(newNodeUrl)) {
         liqcoin.networkNodes.push(newNodeUrl);
     }
-    const registerNodeResults: AxiosResponse<any>[] = [];
     await Promise.all(
         liqcoin.networkNodes.map(async (networkNode) => {
             const requestOption = {
@@ -68,10 +67,8 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
             };
             let result = await CustomAxios(requestOption);
             console.info(`Network Node:${networkNode} Result:`, result);
-            registerNodeResults.push(result);
         }),
     );
-    console.info('Register node results:', registerNodeResults);
     const bulkRegisterOption = {
         url: `${newNodeUrl}/register-nodes-bulk`,
         Method: 'POST',
@@ -80,7 +77,8 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
         },
     };
     let result = await CustomAxios(bulkRegisterOption);
-    res.send(
+    console.info('Bulk register result:', result);
+    res.json(
         new ServiceResponse({
             status: true,
             statusCode: 201,
@@ -94,11 +92,37 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
 //Register a node with the network
 app.post('/register-node', (req, res, next) => {
     const newNodeUrl = req.body.newNodeUrl;
+    if (!liqcoin.networkNodes.includes(newNodeUrl) && liqcoin.currentNodeUrl != newNodeUrl) {
+        liqcoin.networkNodes.push(newNodeUrl);
+    }
+    res.json(
+        new ServiceResponse({
+            status: true,
+            statusCode: 201,
+            data: {
+                message: 'New node registered successfully!',
+            },
+        }).get(),
+    );
 });
 
 //Register multiple nodes at once
 app.post('/register-nodes-bulk', (req, res, next) => {
-    const newNodeUrl = req.body.newNodeUrl;
+    const allNetworkNodes = req.body.allNetworkNodes;
+    allNetworkNodes.map((network_node: string) => {
+        if (!liqcoin.networkNodes.includes(network_node) && liqcoin.currentNodeUrl != network_node) {
+            liqcoin.networkNodes.push(network_node);
+        }
+    });
+    res.json(
+        new ServiceResponse({
+            status: true,
+            statusCode: 201,
+            data: {
+                message: 'Bulk registriation successfull!',
+            },
+        }).get(),
+    );
 });
 
 app.listen(PORT, () => {

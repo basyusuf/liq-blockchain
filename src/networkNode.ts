@@ -1,11 +1,13 @@
 import express from 'express';
 const PORT = process.env.PORT || 3000;
 const app = express();
-import { Blockchain } from './blockchain';
+import { Block, Blockchain } from './blockchain';
 import { ServiceResponse } from './helpers/ServiceResponse';
 import CustomAxios from './helpers/CustomAxios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { v1 as uuidv1 } from 'uuid';
 const liqcoin = new Blockchain();
+const nodeAddress = uuidv1().split('-').join('');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -67,17 +69,36 @@ app.post('/transaction/broadcast', async (req, res, next) => {
     );
 });
 
-app.get('/mine', (req, res, next) => {
+app.get('/mine', async (req, res, next) => {
     const lastBlock = liqcoin.getLastBlock();
     const previousBlockHash = lastBlock.hash;
     const nonce = liqcoin.proofOfWork(previousBlockHash, liqcoin.getPendingTransaction());
     const blockHash = liqcoin.hashBlock(previousBlockHash, liqcoin.getPendingTransaction(), nonce);
-    //Mining rewards
-    liqcoin.createNewTransaction(10, '00', 'ABCDEFGHTEREQAQSAD1W');
-
     const newBlock = liqcoin.createNewBlock(nonce, previousBlockHash, blockHash);
-
     console.info('New block:', newBlock);
+
+    await Promise.all(
+        liqcoin.networkNodes.map(async (network_node: string) => {
+            const requestOption: AxiosRequestConfig = {
+                url: `${network_node}/receive-new-block`,
+                method: 'POST',
+                data: { newBlock },
+            };
+            const result = await CustomAxios(requestOption);
+            console.info('Mine result:', result);
+        }),
+    );
+    const requestOptionForRewards: AxiosRequestConfig = {
+        url: `${liqcoin.currentNodeUrl}/transaction/broadcast`,
+        method: 'POST',
+        data: {
+            amount: 10,
+            sender: '00',
+            recipient: nodeAddress,
+        },
+    };
+    let resultForRewards = await CustomAxios(requestOptionForRewards);
+    console.info('Result for rewards:', resultForRewards);
     res.json(
         new ServiceResponse({
             status: true,
@@ -85,6 +106,21 @@ app.get('/mine', (req, res, next) => {
             data: { block: newBlock },
         }).get(),
     );
+});
+
+app.post('/receive-new-block', (req, res, next) => {
+    const newBlock = req.body.newBlock as Block;
+    const lastBlock = liqcoin.getLastBlock();
+    const isCorrectHash = lastBlock.hash === newBlock.previousBlockHash;
+    const isCorrectIndex = lastBlock.index + 1 === newBlock.index;
+    if (isCorrectHash && isCorrectIndex) {
+        liqcoin.chain.push(newBlock);
+        liqcoin.pendingTransactions = [];
+        console.info('Pending transaction clear. Data:', liqcoin.pendingTransactions);
+        res.json(new ServiceResponse({ status: true, statusCode: 200, data: { newBlock } }).get());
+    } else {
+        res.json(new ServiceResponse({ status: false, statusCode: 400, data: { newBlock } }).get());
+    }
 });
 
 //Register a node and broadcast it the network

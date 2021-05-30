@@ -2,7 +2,7 @@ import { SHA256 } from 'crypto-js';
 import { v1 as uuidv1 } from 'uuid';
 const CURRENT_NODE_URL = process.env.CURRENT_URL || 'http://localhost:3000';
 console.info('Current Node Url:', CURRENT_NODE_URL);
-interface Block {
+export interface Block {
     index: number;
     timestamp: number;
     transactions: Array<any>;
@@ -10,7 +10,7 @@ interface Block {
     hash: string;
     previousBlockHash: string;
 }
-interface Transaction {
+export interface Transaction {
     id: string;
     amount: number;
     sender: string;

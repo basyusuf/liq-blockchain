@@ -4,7 +4,7 @@ const app = express();
 import { Blockchain } from './blockchain';
 import { ServiceResponse } from './helpers/ServiceResponse';
 import CustomAxios from './helpers/CustomAxios';
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 const liqcoin = new Blockchain();
 
 app.use(express.urlencoded({ extended: true }));
@@ -60,19 +60,23 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
     }
     await Promise.all(
         liqcoin.networkNodes.map(async (networkNode) => {
-            const requestOption = {
+            const requestOption: AxiosRequestConfig = {
                 url: `${networkNode}/register-node`,
-                Method: 'POST',
-                body: { newNodeUrl },
+                method: 'POST',
+                data: { newNodeUrl },
             };
-            let result = await CustomAxios(requestOption);
-            console.info(`Network Node:${networkNode} Result:`, result);
+            try {
+                let result = await CustomAxios(requestOption);
+                console.info(`Network Node:${networkNode} Result:`, result);
+            } catch (err) {
+                console.info('Register request have error:', err);
+            }
         }),
     );
-    const bulkRegisterOption = {
+    const bulkRegisterOption: AxiosRequestConfig = {
         url: `${newNodeUrl}/register-nodes-bulk`,
-        Method: 'POST',
-        body: {
+        method: 'POST',
+        data: {
             allNetworkNodes: [...liqcoin.networkNodes, liqcoin.currentNodeUrl],
         },
     };

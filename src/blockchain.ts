@@ -1,5 +1,6 @@
 import { SHA256 } from 'crypto-js';
 const CURRENT_NODE_URL = process.env.CURRENT_URL || 'http://localhost:3000';
+console.info('Current Node Url:', CURRENT_NODE_URL);
 interface Block {
     index: number;
     timestamp: number;

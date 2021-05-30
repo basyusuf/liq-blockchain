@@ -21,13 +21,48 @@ app.get('/blockchain', (req, res, next) => {
 });
 
 app.post('/transaction', (req, res, next) => {
-    console.log('Data:', req.body);
-    let blockIndex = liqcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+    console.log('Request Body:', req.body);
+    const { id, amount, sender, recipient, timestamp } = req.body;
+    const blockIndex = liqcoin.addTransactionToPendingTransaction({
+        id,
+        amount,
+        sender,
+        recipient,
+        timestamp,
+    });
     res.json(
         new ServiceResponse({
             status: true,
             statusCode: 201,
-            data: { message: `Block number is: ${blockIndex}` },
+            data: {
+                message: `Transaction will be added in block: ${blockIndex}`,
+            },
+        }).get(),
+    );
+});
+
+app.post('/transaction/broadcast', async (req, res, next) => {
+    const newTransaction = liqcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+    liqcoin.addTransactionToPendingTransaction(newTransaction);
+
+    await Promise.all(
+        liqcoin.networkNodes.map(async (network_node) => {
+            let requestOption: AxiosRequestConfig = {
+                url: `${network_node}/transaction`,
+                method: 'POST',
+                data: newTransaction,
+            };
+            let result = await CustomAxios(requestOption);
+            console.info('Result:', result);
+        }),
+    );
+    res.json(
+        new ServiceResponse({
+            status: true,
+            statusCode: 201,
+            data: {
+                message: 'Transaction created and broadcast successfully!',
+            },
         }).get(),
     );
 });

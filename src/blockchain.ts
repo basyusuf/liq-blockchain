@@ -1,4 +1,5 @@
 import { SHA256 } from 'crypto-js';
+import { v1 as uuidv1 } from 'uuid';
 const CURRENT_NODE_URL = process.env.CURRENT_URL || 'http://localhost:3000';
 console.info('Current Node Url:', CURRENT_NODE_URL);
 interface Block {
@@ -10,6 +11,7 @@ interface Block {
     previousBlockHash: string;
 }
 interface Transaction {
+    id: string;
     amount: number;
     sender: string;
     recipient: string;
@@ -49,14 +51,16 @@ export class Blockchain {
     }
     createNewTransaction(amount: number, sender: string, recipient: string) {
         let newTransaction: Transaction = {
+            id: uuidv1().split('-').join(''),
             amount,
             sender,
             recipient,
             timestamp: new Date().getTime(),
         };
-
-        this.pendingTransactions.push(newTransaction);
-
+        return newTransaction;
+    }
+    addTransactionToPendingTransaction(transactionItem: Transaction) {
+        this.pendingTransactions.push(transactionItem);
         return this.getLastBlock()['index'] + 1;
     }
     hashBlock(previousBlockHash: string, currentBlockData: Array<Transaction>, nonce: number) {

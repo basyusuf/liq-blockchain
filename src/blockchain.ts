@@ -81,4 +81,29 @@ export class Blockchain {
     getPendingTransaction() {
         return this.pendingTransactions;
     }
+    chainIsValid(blocks: Array<Block>): boolean {
+        let validStatus = true;
+        //Started index 1. Skip genesis block
+        for (let index = 1; index < blocks.length; index++) {
+            let currentBlock = blocks[index];
+            let prevBlock = blocks[index - 1];
+            let blockHash = this.hashBlock(prevBlock.hash, currentBlock.transactions, currentBlock.nonce);
+            if (blockHash.substring(0, 4) !== '0000') {
+                validStatus = false;
+            }
+            if (currentBlock.previousBlockHash !== prevBlock.hash) {
+                validStatus = false;
+            }
+        }
+        const genesisBlock = blocks[0];
+        const correctNonce = genesisBlock.nonce === 100;
+        const correctPreviousBlockHash = genesisBlock.previousBlockHash === '0';
+        const correctHash = genesisBlock.hash === '0';
+        const correctTransaction = genesisBlock.transactions.length === 0;
+
+        if (!correctNonce || !correctPreviousBlockHash || !correctHash || !correctTransaction) {
+            validStatus = false;
+        }
+        return validStatus;
+    }
 }

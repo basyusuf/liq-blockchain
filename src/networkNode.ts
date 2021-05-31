@@ -200,6 +200,57 @@ app.post('/register-nodes-bulk', (req, res, next) => {
     );
 });
 
+app.get('/consensus', async (req, res, next) => {
+    const blockchains: Array<Blockchain> = [];
+    Promise.all(
+        liqcoin.networkNodes.map(async (network_node) => {
+            const requestOption: AxiosRequestConfig = {
+                url: `${network_node}/blockchain`,
+                method: 'GET',
+            };
+            const result = await CustomAxios(requestOption);
+            blockchains.push(result.data as Blockchain);
+        }),
+    );
+    const currentChainLink = liqcoin.chain.length;
+    let maxChainLength = currentChainLink;
+    let newLongestChain = null;
+    let newPendingTransaction = null;
+
+    blockchains.map((blockchain_item) => {
+        if (blockchain_item.chain.length > maxChainLength) {
+            maxChainLength = blockchain_item.chain.length;
+            newLongestChain = blockchain_item.chain;
+            newPendingTransaction = blockchain_item.pendingTransactions;
+        }
+    });
+    if (!newLongestChain || (newLongestChain && !liqcoin.chainIsValid(newLongestChain))) {
+        res.json(
+            new ServiceResponse({
+                status: false,
+                statusCode: 200,
+                data: {
+                    message: 'Current chain has not been replaced.',
+                    chain: liqcoin.chain,
+                },
+            }).get(),
+        );
+    } else {
+        liqcoin.chain = newLongestChain;
+        liqcoin.pendingTransactions = newPendingTransaction;
+        res.json(
+            new ServiceResponse({
+                status: true,
+                statusCode: 200,
+                data: {
+                    message: 'This chain has been replaced.',
+                    chain: liqcoin.chain,
+                },
+            }).get(),
+        );
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });

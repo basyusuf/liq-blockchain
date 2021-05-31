@@ -202,27 +202,33 @@ app.post('/register-nodes-bulk', (req, res, next) => {
 
 app.get('/consensus', async (req, res, next) => {
     const blockchains: Array<Blockchain> = [];
-    Promise.all(
+    await Promise.all(
         liqcoin.networkNodes.map(async (network_node) => {
             const requestOption: AxiosRequestConfig = {
                 url: `${network_node}/blockchain`,
                 method: 'GET',
             };
             const result = await CustomAxios(requestOption);
-            blockchains.push(result.data as Blockchain);
+            blockchains.push(result.data.data);
         }),
     );
     const currentChainLink = liqcoin.chain.length;
     let maxChainLength = currentChainLink;
     let newLongestChain = null;
     let newPendingTransaction = null;
-
+    console.info('Blockchains:', blockchains);
     blockchains.map((blockchain_item) => {
         if (blockchain_item.chain.length > maxChainLength) {
             maxChainLength = blockchain_item.chain.length;
             newLongestChain = blockchain_item.chain;
             newPendingTransaction = blockchain_item.pendingTransactions;
         }
+    });
+    console.info({
+        currentChainLink,
+        maxChainLength,
+        newLongestChain,
+        newPendingTransaction,
     });
     if (!newLongestChain || (newLongestChain && !liqcoin.chainIsValid(newLongestChain))) {
         res.json(

@@ -6,6 +6,12 @@ import { ServiceResponse } from './helpers/ServiceResponse';
 import CustomAxios from './helpers/CustomAxios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { v1 as uuidv1 } from 'uuid';
+import { Validation } from './middleware/Validation';
+import { GetTransactionDTO } from './dto/GetTransaction.dto';
+import { GetAddressDTO } from './dto/GetAddress.dto';
+import { GetBlockDTO } from './dto/GetBlock.dto';
+import { CreateTransactionDTO } from './dto/CreateTransaction.dto';
+import { CreateTransactionBroadcastDTO } from './dto/CreateTransactionBroadcast.dto';
 const liqcoin = new Blockchain();
 const nodeAddress = uuidv1().split('-').join('');
 
@@ -22,7 +28,7 @@ app.get('/blockchain', (req, res, next) => {
     );
 });
 
-app.post('/transaction', (req, res, next) => {
+app.post('/transaction', Validation(CreateTransactionDTO), (req, res, next) => {
     console.log('Request Body:', req.body);
     const { id, amount, sender, recipient, timestamp } = req.body;
     const blockIndex = liqcoin.addTransactionToPendingTransaction({
@@ -43,7 +49,7 @@ app.post('/transaction', (req, res, next) => {
     );
 });
 
-app.post('/transaction/broadcast', async (req, res, next) => {
+app.post('/transaction/broadcast', Validation(CreateTransactionBroadcastDTO), async (req, res, next) => {
     const newTransaction = liqcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
     liqcoin.addTransactionToPendingTransaction(newTransaction);
 
@@ -257,7 +263,7 @@ app.get('/consensus', async (req, res, next) => {
     }
 });
 
-app.get('/block/:hash', async (req, res, next) => {
+app.get('/block/:hash', Validation(GetBlockDTO), async (req, res, next) => {
     let hash = req.params.hash;
     let findHash = liqcoin.getBlock(hash);
     if (findHash) {
@@ -283,7 +289,7 @@ app.get('/block/:hash', async (req, res, next) => {
     }
 });
 
-app.get('/transaction/:transactionId', async (req, res, next) => {
+app.get('/transaction/:transactionId', Validation(GetTransactionDTO), async (req, res, next) => {
     let transactionId = req.params.transactionId;
     let hasTransactionData = liqcoin.getTransaction(transactionId);
     console.info('Has transaction data:', hasTransactionData);
@@ -306,7 +312,7 @@ app.get('/transaction/:transactionId', async (req, res, next) => {
     }
 });
 
-app.get('/address/:address', async (req, res, next) => {
+app.get('/address/:address', Validation(GetAddressDTO), async (req, res, next) => {
     const address = req.params.address;
     let addressData = liqcoin.getAddressData(address);
     res.json(

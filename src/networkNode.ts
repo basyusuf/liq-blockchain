@@ -283,9 +283,40 @@ app.get('/block/:hash', async (req, res, next) => {
     }
 });
 
-app.get('/transaction/:id', async (req, res, next) => {});
+app.get('/transaction/:transactionId', async (req, res, next) => {
+    let transactionId = req.params.transactionId;
+    let hasTransactionData = liqcoin.getTransaction(transactionId);
+    console.info('Has transaction data:', hasTransactionData);
+    if (hasTransactionData.status) {
+        res.json(
+            new ServiceResponse({
+                status: true,
+                statusCode: 200,
+                data: hasTransactionData,
+            }).get(),
+        );
+    } else {
+        res.json(
+            new ServiceResponse({
+                status: false,
+                statusCode: 200,
+                data: hasTransactionData,
+            }).get(),
+        );
+    }
+});
 
-app.get('/address/:address', async (req, res, next) => {});
+app.get('/address/:address', async (req, res, next) => {
+    const address = req.params.address;
+    let addressData = liqcoin.getAddressData(address);
+    res.json(
+        new ServiceResponse({
+            status: true,
+            statusCode: 200,
+            data: addressData,
+        }).get(),
+    );
+});
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

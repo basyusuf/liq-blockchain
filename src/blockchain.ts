@@ -106,4 +106,8 @@ export class Blockchain {
         }
         return validStatus;
     }
+    getBlock(hash: string) {
+        let targetBlock = this.chain.filter((block_item) => block_item.hash == hash);
+        return targetBlock.length > 0 ? targetBlock : null;
+    }
 }

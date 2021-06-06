@@ -257,6 +257,36 @@ app.get('/consensus', async (req, res, next) => {
     }
 });
 
+app.get('/block/:hash', async (req, res, next) => {
+    let hash = req.params.hash;
+    let findHash = liqcoin.getBlock(hash);
+    if (findHash) {
+        res.json(
+            new ServiceResponse({
+                status: true,
+                statusCode: 200,
+                data: {
+                    block: findHash,
+                },
+            }).get(),
+        );
+    } else {
+        res.json(
+            new ServiceResponse({
+                status: false,
+                statusCode: 200,
+                data: {
+                    chain: findHash,
+                },
+            }).get(),
+        );
+    }
+});
+
+app.get('/transaction/:id', async (req, res, next) => {});
+
+app.get('/address/:address', async (req, res, next) => {});
+
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });

@@ -12,12 +12,28 @@ import { GetAddressDTO } from './dto/GetAddress.dto';
 import { GetBlockDTO } from './dto/GetBlock.dto';
 import { CreateTransactionDTO } from './dto/CreateTransaction.dto';
 import { CreateTransactionBroadcastDTO } from './dto/CreateTransactionBroadcast.dto';
+import SwaggerUI from 'swagger-ui-express';
+import SwaggerJsDoc from 'swagger-jsdoc';
+
 const liqcoin = new Blockchain();
 const nodeAddress = uuidv1().split('-').join('');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+/**
+ * @swagger
+ * /blockchain:
+ *   get:
+ *     description: Get blockchain full detail
+ *     tags:
+ *       - Blockchain
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: List blockchain object
+ */
 app.get('/blockchain', (req, res, next) => {
     res.json(
         new ServiceResponse({
@@ -28,6 +44,47 @@ app.get('/blockchain', (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /transaction:
+ *   post:
+ *     description: Create transaction by Broadcast Automatically
+ *     tags:
+ *       - Transaction
+ *     parameters:
+ *       - name: id
+ *         description: Transaction Id
+ *         in: formData
+ *         required: true
+ *         type: number
+ *       - name: amount
+ *         description: Transaction Amount
+ *         in: formData
+ *         required: true
+ *         type: number
+ *       - name: sender
+ *         description: Transaction Sender
+ *         in: formData
+ *         required: true
+ *         type: string
+ *       - name: recipient
+ *         description: Transaction Recipient
+ *         in: formData
+ *         required: true
+ *         type: string
+ *       - name: timestamp
+ *         description: Transaction Timestamp
+ *         in: formData
+ *         required: true
+ *         type: number
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       201:
+ *         description: Created Transaction By Broadcast
+ *       400:
+ *         description: Validation Error
+ */
 app.post('/transaction', Validation(CreateTransactionDTO), (req, res, next) => {
     console.log('Request Body:', req.body);
     const { id, amount, sender, recipient, timestamp } = req.body;
@@ -49,6 +106,37 @@ app.post('/transaction', Validation(CreateTransactionDTO), (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /transaction/broadcast:
+ *   post:
+ *     description: Create transaction
+ *     tags:
+ *       - Transaction
+ *     parameters:
+ *       - name: amount
+ *         description: Transaction Amount
+ *         in: formData
+ *         required: true
+ *         type: number
+ *       - name: sender
+ *         description: Transaction Sender
+ *         in: formData
+ *         required: true
+ *         type: string
+ *       - name: recipient
+ *         description: Transaction Recipient
+ *         in: formData
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       201:
+ *         description: Created Transaction
+ *       400:
+ *         description: Validation Error
+ */
 app.post('/transaction/broadcast', Validation(CreateTransactionBroadcastDTO), async (req, res, next) => {
     const newTransaction = liqcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
     liqcoin.addTransactionToPendingTransaction(newTransaction);
@@ -75,6 +163,19 @@ app.post('/transaction/broadcast', Validation(CreateTransactionBroadcastDTO), as
     );
 });
 
+/**
+ * @swagger
+ * /mine:
+ *   get:
+ *     description: Mine block
+ *     tags:
+ *       - Mine
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Mine completed
+ */
 app.get('/mine', async (req, res, next) => {
     const lastBlock = liqcoin.getLastBlock();
     const previousBlockHash = lastBlock.hash;
@@ -114,6 +215,27 @@ app.get('/mine', async (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /receive-new-block:
+ *   post:
+ *     description: Receive new block used by Mine
+ *     tags:
+ *       - Mine
+ *     parameters:
+ *       - name: newBlock
+ *         description: New Block Item
+ *         in: body
+ *         required: true
+ *         type: object
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Created Transaction
+ *       400:
+ *         description: Isn't correct hash or correct index
+ */
 app.post('/receive-new-block', (req, res, next) => {
     const newBlock = req.body.newBlock as Block;
     const lastBlock = liqcoin.getLastBlock();
@@ -129,6 +251,25 @@ app.post('/receive-new-block', (req, res, next) => {
     }
 });
 
+/**
+ * @swagger
+ * /register-and-broadcast-node:
+ *   post:
+ *     description: Register blockchain and broadcast all nodes. Sync action.
+ *     tags:
+ *       - Blockchain
+ *     parameters:
+ *       - name: newNodeUrl
+ *         description: New node url for registering
+ *         in: formData
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       201:
+ *         description: Register Successfully!
+ */
 //Register a node and broadcast it the network
 app.post('/register-and-broadcast-node', async (req, res, next) => {
     const newNodeUrl = req.body.newNodeUrl;
@@ -170,6 +311,25 @@ app.post('/register-and-broadcast-node', async (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /register-node:
+ *   post:
+ *     description: Register a node with the network.
+ *     tags:
+ *       - Blockchain
+ *     parameters:
+ *       - name: newNodeUrl
+ *         description: New node url for registering
+ *         in: formData
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       201:
+ *         description: Register Successfully!
+ */
 //Register a node with the network
 app.post('/register-node', (req, res, next) => {
     const newNodeUrl = req.body.newNodeUrl;
@@ -187,6 +347,25 @@ app.post('/register-node', (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /register-nodes-bulk:
+ *   post:
+ *     description: Register a node with the network.
+ *     tags:
+ *       - Blockchain
+ *     parameters:
+ *       - name: allNetworkNodes
+ *         description: All network nodes on blockchain
+ *         in: body
+ *         required: true
+ *         type: array
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       201:
+ *         description: Bulk registriation successfull!
+ */
 //Register multiple nodes at once
 app.post('/register-nodes-bulk', (req, res, next) => {
     const allNetworkNodes = req.body.allNetworkNodes;
@@ -206,6 +385,19 @@ app.post('/register-nodes-bulk', (req, res, next) => {
     );
 });
 
+/**
+ * @swagger
+ * /consensus:
+ *   get:
+ *     description: Execute consensus method
+ *     tags:
+ *       - Blockchain
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: This chain has been replaced
+ */
 app.get('/consensus', async (req, res, next) => {
     const blockchains: Array<Blockchain> = [];
     await Promise.all(
@@ -263,6 +455,25 @@ app.get('/consensus', async (req, res, next) => {
     }
 });
 
+/**
+ * @swagger
+ * /block/{hash}:
+ *   post:
+ *     description: Get block detail
+ *     tags:
+ *       - Blockchain
+ *     parameters:
+ *       - name: hash
+ *         description: Block hash
+ *         in: path
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: All information for this block
+ */
 app.get('/block/:hash', Validation(GetBlockDTO), async (req, res, next) => {
     let hash = req.params.hash;
     let findHash = liqcoin.getBlock(hash);
@@ -289,6 +500,25 @@ app.get('/block/:hash', Validation(GetBlockDTO), async (req, res, next) => {
     }
 });
 
+/**
+ * @swagger
+ * /transaction/{transactionId}:
+ *   post:
+ *     description: Get transaction detail
+ *     tags:
+ *       - Transaction
+ *     parameters:
+ *       - name: transactionId
+ *         description: Transaction Id
+ *         in: path
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: All information for this transaction
+ */
 app.get('/transaction/:transactionId', Validation(GetTransactionDTO), async (req, res, next) => {
     let transactionId = req.params.transactionId;
     let hasTransactionData = liqcoin.getTransaction(transactionId);
@@ -312,6 +542,25 @@ app.get('/transaction/:transactionId', Validation(GetTransactionDTO), async (req
     }
 });
 
+/**
+ * @swagger
+ * /address/{address}:
+ *   post:
+ *     description: Get address detail
+ *     tags:
+ *       - Blockchain
+ *     parameters:
+ *       - name: address
+ *         description: Address Id
+ *         in: path
+ *         required: true
+ *         type: string
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: All information for this address
+ */
 app.get('/address/:address', Validation(GetAddressDTO), async (req, res, next) => {
     const address = req.params.address;
     let addressData = liqcoin.getAddressData(address);
@@ -324,6 +573,25 @@ app.get('/address/:address', Validation(GetAddressDTO), async (req, res, next) =
     );
 });
 
+//Swagger API Documentation
+const swaggerDefinition = {
+    info: {
+        title: 'Liq Blockchain Swagger API',
+        version: '1.0.0',
+        description: 'Endpoints to test the all routes',
+    },
+    //On server host:domain.com OR local: localhost:3000
+    host: 'localhost:3000',
+    basePath: '/',
+};
+const swaggerOptions = {
+    swaggerDefinition,
+    apis: [__filename],
+};
+const swaggerSpec = SwaggerJsDoc(swaggerOptions);
+app.use('/documentation', SwaggerUI.serve, SwaggerUI.setup(swaggerSpec));
+
+//Starting node
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });
